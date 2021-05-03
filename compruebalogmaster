@@ -1,0 +1,162 @@
+import re
+from urllib.parse import urljoin, urlsplit, SplitResult
+import requests
+from bs4 import BeautifulSoup
+from openpyxl import *
+from urllib.request import urlopen
+#---- comprueba login
+
+def comprueba_login(href):
+	try:
+		
+		soup2=entrada(href)
+		if(soup2!="error"):
+			
+			inputs=soup2.find_all('input',type='password')
+			#inputs2=soup2.find_all('input',type='hidden')
+			if ((len(inputs)!=0)):
+				return True
+			else:
+				return False
+		else:
+			
+			return False
+	except:
+		return False
+#---- entra en la pagina 
+def entrada(url):
+	try:
+		r=requests.get(url,timeout=2)
+
+
+		if "pdf" in str(url):
+			return "error"
+		else:
+			soup = BeautifulSoup(r.content, 'html.parser')
+			return soup
+	except:
+		return "error"
+#---- entra en la pagina 
+
+
+def comprueba_palabras(palabra):
+	metadato=palabra.lower()
+	
+	
+	palabras=['ingreso','cuenta','virtual','portal','aula','campus','plataforma','onclass','acceso','acceder','autenticacion','log','intranet','virtual','universidad','login','entrar','usuario','cuenta','learning','ingresar','registrarme']
+	
+	suma=0
+	for y in range(0,len(palabras)):
+	
+		if(metadato.find(palabras[y])!=-1):
+			suma=suma+1
+			break
+
+	if(suma!=0):
+		return True
+	else:
+		return False
+			
+		
+
+	
+def home(url):
+	try:
+		soup=entrada(url)
+		b=soup.find_all('a')
+		matriz=[]
+		for i in range(0,len(b)):
+			etiqueta=""
+			etiqueta=b[i].text
+			if(comprueba_palabras(etiqueta)==True):
+				matriz.append(b[i]['href'])
+		if(matriz==[]):
+			return False
+		else:
+			return matriz
+	except:
+		return False
+	
+def webs(url):
+
+	soup=entrada(url)
+	urltemp=url
+	matriz=[]
+	resultados=[]
+	suma=0
+	try:
+		for url in soup.find_all('a'):
+			matriz.append(url.get('href'))
+			if (comprueba_palabras(str(url.get('href')))==True):
+				if(comprueba_login(url.get('href'))==False):
+					if(comprueba_login(urltemp+str(url.get('href')))==True):
+						suma=suma+1
+						resultados.append(urltemp+str(url.get('href')))
+						break
+				else:
+					suma=suma+1
+					resultados.append(url.get('href'))
+					break
+		if (suma!=0):
+			return resultados
+		else:
+			return False
+	except:
+		return False
+		
+	
+
+def procesardatos(matriz):
+	matrizDatos=[]
+	for i in range(0,len(matriz)):
+		if (comprueba_login(matriz[i])==True or comprueba_login(url+str(matriz[i]))==True):
+			
+			matrizDatos.append(matriz[i])
+			matrizDatos.append(url+str(matriz[i]))
+			return matrizDatos
+			break
+			
+		else: 
+			return False
+
+
+def imprimirnoaparenta():
+	print("no tiene login aparentemente")
+
+def imprimir():
+	print ("no hay login")
+
+def imprimematriz(matriz):
+
+	for i in range(0,len(matriz)):
+		print("esta pag tiene log",matriz[i])
+def imprimeno():
+	print("no hay login")
+
+
+print("inserte url: ")
+url=input()
+
+matriz1=[]
+suma=0
+
+
+if (comprueba_login(url)==False):
+
+	matriz1=home(url)
+
+	
+	if (matriz1!=False):
+		
+		if(procesardatos(matriz1)!=False):
+			imprimematriz(procesardatos(matriz1))
+		else:
+			print("procesando..")
+			if(webs(url)!=False):
+				imprimematriz(webs(url))
+			else:
+				print("sigue procesando")
+				imprimirnoaparenta()
+	else:
+		imprimeno()
+
